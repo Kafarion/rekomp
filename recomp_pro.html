@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ReComp Pro</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReComp Pro">
+<meta name="theme-color" content="#1D9E75">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f5f5f3;--bg3:#eee;
+  --text:#1a1a1a;--text2:#666;--text3:#999;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.2);
+  --green:#1D9E75;--gl:#E1F5EE;--gd:#0F6E56;
+  --red:#A32D2D;--rl:#FCEBEB;
+  --amber:#854F0B;--al:#FAEEDA;
+  --blue:#185FA5;--bl:#E6F1FB;
+  --r:8px;--rl2:12px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;--text:#f0f0ea;--text2:#9a9a94;--text3:#666;--border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);--gl:#0a2e1e;}
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column;-webkit-text-size-adjust:100%}
+.topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:10px 16px;padding-top:calc(10px + var(--safe-top));display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px}
+.topbar-title{font-size:15px;font-weight:700;letter-spacing:-0.02em}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+.sync-dot.ok{background:var(--green)}
+.sync-dot.err{background:var(--red)}
+.sync-dot.syncing{background:var(--amber);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.badge{display:inline-block;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-g{background:var(--gl);color:var(--gd)}
+.badge-n{background:var(--bg2);color:var(--text2)}
+.cfgbar{display:flex;align-items:center;gap:8px;padding:7px 14px;border-bottom:0.5px solid var(--border);background:var(--bg2);flex-shrink:0;flex-wrap:wrap}
+.cfgbar label{font-size:11px;color:var(--text2);white-space:nowrap}
+.cfgbar select,.cfgbar input{font-size:12px;padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);font-family:var(--font)}
+.cfgbar select{flex:0 0 auto}
+.cfgbar input{flex:1;min-width:0;letter-spacing:.03em}
+.layout{display:flex;flex:1;overflow:hidden;min-height:0}
+.sidebar{width:190px;background:var(--bg2);border-right:0.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.nav-item{padding:10px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text2);border-left:2px solid transparent;transition:all .1s;-webkit-tap-highlight-color:transparent}
+.nav-item:hover,.nav-item:active{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--bg);color:var(--text);font-weight:600;border-left-color:var(--green)}
+.nav-item svg{width:14px;height:14px;flex-shrink:0}
+.nav-sep{height:0.5px;background:var(--border);margin:4px 0}
+.bottomtabs{display:none;border-top:0.5px solid var(--border);background:var(--bg);padding-bottom:var(--safe-bot);flex-shrink:0}
+.tabs-row{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs-row::-webkit-scrollbar{display:none}
+.tab-btn{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 10px;font-size:10px;color:var(--text2);cursor:pointer;border-top:2px solid transparent;-webkit-tap-highlight-color:transparent;min-width:52px}
+.tab-btn.active{color:var(--green);border-top-color:var(--green)}
+.tab-btn svg{width:18px;height:18px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.tab{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.tab.active{display:flex}
+.thead{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;flex-wrap:wrap}
+.thead-title{font-size:15px;font-weight:600}
+.thead-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.tbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px}
+.btn{padding:8px 14px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--r);cursor:pointer;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-tap-highlight-color:transparent;transition:background .1s;white-space:nowrap}
+.btn:active{background:var(--bg2)}
+.btn-g{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-g:active{background:var(--gd)}
+.btn-sm{padding:6px 11px;font-size:12px}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:12px;color:var(--text2);font-weight:500}
+input[type=text],input[type=number],input[type=date],input[type=password],textarea,select{width:100%;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--r);padding:9px 11px;font-size:14px;font-family:var(--font);color:var(--text);outline:none;-webkit-appearance:none;appearance:none}
+input:focus,textarea:focus,select:focus{border-color:var(--green);background:var(--bg)}
+textarea{resize:vertical;min-height:72px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media(max-width:400px){.row3{grid-template-columns:1fr 1fr}}
+.fbox{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px;display:none}
+.fbox.open{display:block}
+.section-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+@media(max-width:500px){.stats4{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:10px 12px}
+.stat-label{font-size:11px;color:var(--text2);margin-bottom:3px}
+.stat-value{font-size:21px;font-weight:700;line-height:1}
+.stat-unit{font-size:11px;color:var(--text2);margin-top:2px}
+.entry{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:11px 14px;margin-bottom:8px}
+.entry-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:8px}
+.entry-title{font-size:13px;font-weight:600}
+.entry-date{font-size:11px;color:var(--text2);flex-shrink:0}
+.entry-detail{font-size:12px;color:var(--text2);line-height:1.6}
+.badge2{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:600;margin-right:3px}
+.bg{background:var(--gl);color:var(--gd)}.bb{background:var(--bl);color:var(--blue)}.bo{background:var(--al);color:var(--amber)}.br{background:var(--rl);color:var(--red)}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.pill{padding:5px 11px;border-radius:99px;font-size:12px;border:0.5px solid var(--border2);cursor:pointer;color:var(--text2);-webkit-tap-highlight-color:transparent;position:relative}
+.pill.active{background:var(--gl);color:var(--gd);border-color:var(--green);font-weight:600}
+.pill.has-data::after{content:'';position:absolute;top:3px;right:3px;width:5px;height:5px;background:var(--green);border-radius:50%}
+.chat-msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.msg{max-width:88%;padding:10px 13px;border-radius:var(--rl2);font-size:14px;line-height:1.55;word-break:break-word}
+.msg.u{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:3px}
+.msg.a{align-self:flex-start;background:var(--bg2);border:0.5px solid var(--border);border-bottom-left-radius:3px;white-space:pre-wrap}
+.msg img{max-width:200px;border-radius:6px;margin-top:6px;display:block}
+.cinput-wrap{border-top:0.5px solid var(--border);background:var(--bg);flex-shrink:0;padding:10px 14px;padding-bottom:max(10px,var(--safe-bot))}
+.cinput-imgs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.img-thumb{position:relative;width:60px;height:60px;border-radius:6px;overflow:hidden;flex-shrink:0}
+.img-thumb img{width:100%;height:100%;object-fit:cover}
+.img-thumb button{position:absolute;top:1px;right:1px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cinput-row{display:flex;gap:8px;align-items:flex-end}
+.cinput-row textarea{flex:1;height:52px;resize:none;font-size:14px;line-height:1.4;min-height:44px;max-height:120px}
+.cinput-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.icon-btn{width:40px;height:40px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.icon-btn:active{background:var(--bg3)}
+.icon-btn svg{width:18px;height:18px;color:var(--text2)}
+.send-btn{width:40px;height:40px;border-radius:var(--r);background:var(--green);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.send-btn:active{background:var(--gd)}
+.send-btn svg{width:18px;height:18px;color:#fff}
+.quick-btns{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+.quick-btns::-webkit-scrollbar{display:none}
+.qbtn{flex-shrink:0;padding:5px 12px;font-size:12px;border-radius:99px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:var(--font)}
+.qbtn:active{background:var(--bg3)}
+.dots span{width:5px;height:5px;border-radius:50%;background:var(--text2);display:inline-block;animation:blink 1.2s infinite;margin:0 2px}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.ev-item{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.ev-item:last-child{border-bottom:none}
+.ev-dot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:5px;flex-shrink:0}
+.ev-dot.r{background:#E24B4A}.ev-dot.o{background:#EF9F27}
+.ev-date{font-size:11px;color:var(--text2);width:82px;flex-shrink:0;padding-top:1px}
+.ev-body{flex:1}.ev-text{font-size:13px;margin-top:2px}
+.empty{text-align:center;padding:40px 20px;color:var(--text2);font-size:13px}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:500;z-index:9999;pointer-events:none;white-space:nowrap}
+.info-box{background:var(--bl);border:0.5px solid var(--blue);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--blue);margin-bottom:12px;line-height:1.6}
+.info-box b{font-weight:600}
+.warn-box{background:var(--al);border:0.5px solid var(--amber);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--amber);margin-bottom:12px;line-height:1.6}
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:20px;text-align:center;cursor:pointer;color:var(--text2);font-size:13px;transition:border-color .2s;-webkit-tap-highlight-color:transparent}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--green);color:var(--green)}
+@media(max-width:640px){
+  .sidebar{display:none}
+  .bottomtabs{display:block}
+  .topbar{padding:8px 14px;padding-top:calc(8px + var(--safe-top))}
+}
+@media(min-width:641px){.cfgbar{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">ReComp Pro</div>
+  <div class="topbar-right">
+    <div class="sync-dot" id="sync-dot" title="Status synchronizacji"></div>
+    <span class="badge badge-g">17.02.2026</span>
+    <span class="badge badge-n" id="topbar-week">T3</span>
+  </div>
+</div>
+
+<div class="cfgbar">
+  <label>Tydzień:</label>
+  <select id="wsel-m" onchange="syncWeek(this.value)">
+    <option value="1">T1</option><option value="2">T2</option><option value="3" selected>T3</option>
+    <option value="4">T4</option><option value="5">T5</option><option value="6">T6</option>
+  </select>
+  <label>API:</label>
+  <input type="password" id="apikey-m" placeholder="sk-ant-..." oninput="syncKey(this.value)"/>
+</div>
+
+<div class="layout">
+<div class="sidebar">
+  <div style="padding:12px 14px 8px;border-bottom:0.5px solid var(--border)">
+    <div style="font-size:13px;font-weight:600">ReComp Pro</div>
+    <div style="font-size:11px;color:var(--text2);margin-top:2px" id="sync-status-text">Lokalnie</div>
+  </div>
+  <div style="padding:6px 0">
+    <div class="nav-item active" onclick="ST('ai')" id="ni-ai"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 2h12v8H4l-3 2V2z"/></svg>Asystent AI</div>
+    <div class="nav-item" onclick="ST('week')" id="ni-week"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="12" height="10" rx="1"/><path d="M1 5h12M4 1v2M10 1v2"/></svg>Tydzień</div>
+    <div class="nav-item" onclick="ST('meas')" id="ni-meas"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="12" height="8" rx="1"/><path d="M4 3V2M7 3V1M10 3V2M4 11v1M7 11v2M10 11v1"/></svg>Pomiary</div>
+    <div class="nav-item" onclick="ST('history')" id="ni-history"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M7 4v3l2 1.5"/></svg>Historia</div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" onclick="ST('import')" id="ni-import"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1v8M4 6l3 3 3-3M2 11h10"/></svg>Import danych</div>
+    <div class="nav-item" onclick="ST('profile')" id="ni-profile"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="4" r="2.5"/><path d="M1 13c0-3.3 2.7-5 6-5s6 1.7 6 5"/></svg>Profil</div>
+    <div class="nav-item" onclick="ST('plans')" id="ni-plans"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="10" height="12" rx="1"/><path d="M4 5h6M4 7.5h6M4 10h4"/></svg>Plany</div>
+    <div class="nav-item" onclick="ST('labs')" id="ni-labs"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 1v5L1.5 12h11L9 6V1"/><path d="M5 1h4"/></svg>Badania</div>
+    <div class="nav-item" onclick="ST('events')" id="ni-events"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1l1.8 3.6L13 5.5l-3 2.9.7 4.1L7 10.5l-3.7 2 .7-4.1L1 5.5l4.2-.9z"/></svg>Zdarzenia</div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" onclick="ST('sync')" id="ni-sync"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 7a6 6 0 1 0 1-3.5M1 1v3h3"/></svg>Synchronizacja</div>
+  </div>
+  <div style="margin-top:auto;padding:12px 14px;border-top:0.5px solid var(--border)">
+    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:5px">Tydzień</label>
+    <select id="wsel-d" onchange="syncWeek(this.value)" style="width:100%;font-size:12px;margin-bottom:10px">
+      <option value="1">T1 (17.02)</option><option value="2">T2 (24.02)</option>
+      <option value="3" selected>T3 (03.03)</option><option value="4">T4 (10.03)</option>
+      <option value="5">T5 (17.03)</option><option value="6">T6 (24.03)</option>
+    </select>
+    <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:5px">Klucz API Anthropic</label>
+    <input type="password" id="apikey-d" placeholder="sk-ant-..." oninput="syncKey(this.value)" style="width:100%;font-size:12px"/>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px">Zapisywany lokalnie</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- AI TAB -->
+<div class="tab active" id="tab-ai">
+  <div class="thead">
+    <div><div class="thead-title">Asystent AI</div><div class="thead-sub">Zna pełny kontekst projektu</div></div>
+  </div>
+  <div class="chat-msgs" id="chat-msgs">
+    <div class="msg a">Cześć! Jestem asystentem Twojego projektu rekompozycji (start 17.02.2026).
+
+Możesz:
+📷 Wkleić zdjęcie screena (Garmin, trening, waga)
+📄 Wgrać plik .md z danymi tygodniowymi
+💬 Opisać dane tekstem
+📊 Pytać o analizę i trendy
+
+Klucz API wpisz w ustawieniach po lewej.</div>
+  </div>
+  <div class="cinput-wrap">
+    <div class="quick-btns">
+      <button class="qbtn" onclick="quickAsk('Wygeneruj raport tygodnia '+activeWeek)">📋 Raport</button>
+      <button class="qbtn" onclick="quickAsk('Przeanalizuj trendy HRV i regeneracji w całym projekcie')">📈 Trendy HRV</button>
+      <button class="qbtn" onclick="quickAsk('Oceń adherencję diety keto i postępy')">🥑 Dieta</button>
+      <button class="qbtn" onclick="quickAsk('Porównaj postęp siłowy między tygodniami')">💪 Siła</button>
+      <button class="qbtn" onclick="ST('import')">📄 Import .md</button>
+    </div>
+    <div class="cinput-imgs" id="pending-imgs" style="display:none"></div>
+    <div class="cinput-row">
+      <textarea id="chat-in" placeholder="Napisz lub wklej dane... (Enter = wyślij)"></textarea>
+      <div class="cinput-actions">
+        <label class="icon-btn" title="Dodaj zdjęcie">
+          <input type="file" accept="image/*" multiple style="display:none" onchange="addImages(this)"/>
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="16" height="12" rx="2"/><circle cx="9" cy="9" r="3"/><path d="M6 3l1.5-2h3L12 3"/></svg>
+        </label>
+        <button class="send-btn" onclick="sendAI()">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9l14-7-6 7 6 7-14-7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WEEK TAB -->
+<div class="tab" id="tab-week">
+  <div class="thead">
+    <div>
+      <div class="thead-title">Tydzień <span id="w-num">3</span> <span style="font-size:12px;font-weight:400;color:var(--text2)" id="w-range">03.03–09.03</span></div>
+      <div class="thead-sub" id="w-sub">Wprowadź dane lub użyj Import AI</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-sm" onclick="openF('fbox-import-day')">⬆ Import AI</button>
+      <button class="btn btn-g btn-sm" onclick="saveDay()">Zapisz</button>
+    </div>
+  </div>
+  <div class="tbody">
+    <div class="fbox" id="fbox-import-day">
+      <div class="section-title" style="margin-top:0">Import przez AI — zdjęcie lub tekst</div>
+      <div style="margin-bottom:10px">
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px dashed var(--border2);border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px">
+          <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="16" height="12" rx="2"/><circle cx="9" cy="9" r="3"/></svg>
+          Dodaj zdjęcie screena
+          <input type="file" accept="image/*" multiple style="display:none" onchange="addImportImages(this)"/>
+        </label>
+        <div id="import-img-preview" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+      </div>
+      <div class="field"><label>Lub wklej tekst</label><textarea id="import-text" placeholder="Garmin: HRV 54ms, RHR 57, BB 68, sen 7h. Trening: wyciskanie 4x8x85kg..."></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-g btn-sm" onclick="parseImport()">Parsuj przez AI</button>
+        <button class="btn btn-sm" onclick="closeF('fbox-import-day')">Anuluj</button>
+      </div>
+      <div id="parse-result" style="margin-top:8px;font-size:12px"></div>
+    </div>
+    <div class="stats4">
+      <div class="stat"><div class="stat-label">HRV śr.</div><div class="stat-value" id="w-hrv">–</div><div class="stat-unit">ms</div></div>
+      <div class="stat"><div class="stat-label">Body Battery</div><div class="stat-value" id="w-bb">–</div></div>
+      <div class="stat"><div class="stat-label">Sen śr.</div><div class="stat-value" id="w-sleep">–</div><div class="stat-unit">h</div></div>
+      <div class="stat"><div class="stat-label">Treningi</div><div class="stat-value" id="w-trn">–</div></div>
+    </div>
+    <div class="section-title">Dzień</div>
+    <div class="pills" id="day-pills"></div>
+    <div class="section-title">Dane — dzień <span id="day-num">1</span></div>
+    <div class="row2">
+      <div class="field"><label>Data</label><input type="date" id="d-date"/></div>
+      <div class="field"><label>Zmiana pracy</label>
+        <select id="d-shift"><option value="">–</option><option value="P">🌅 Poranna</option><option value="PP">🌆 Popołudniowa</option><option value="N">🌙 Nocna</option><option value="W">☀️ Wolne</option></select>
+      </div>
+    </div>
+    <div class="section-title">Garmin / sen</div>
+    <div class="row3">
+      <div class="field"><label>HRV (ms)</label><input type="number" id="d-hrv" placeholder="50"/></div>
+      <div class="field"><label>RHR (bpm)</label><input type="number" id="d-rhr" placeholder="58"/></div>
+      <div class="field"><label>Body Battery</label><input type="number" id="d-bb" placeholder="70"/></div>
+    </div>
+    <div class="row3">
+      <div class="field"><label>Sen (h)</label><input type="number" id="d-sleep" step="0.5" placeholder="7.5"/></div>
+      <div class="field"><label>Jakość snu (1-5)</label><input type="number" id="d-sleepq" min="1" max="5" placeholder="3"/></div>
+      <div class="field"><label>Stres Garmin</label><input type="number" id="d-stress" placeholder="35"/></div>
+    </div>
+    <div class="section-title">Trening</div>
+    <div class="row2">
+      <div class="field"><label>Typ treningu</label><input type="text" id="d-ttype" placeholder="Klatka, Pull, Full body..."/></div>
+      <div class="field"><label>Czas (min)</label><input type="number" id="d-ttime" placeholder="60"/></div>
+    </div>
+    <div class="field"><label>Szczegóły (ćwiczenia, ciężary, serie×powt)</label><textarea id="d-tnote" placeholder="Wyciskanie: 4×8×85kg&#10;Rozpiętki: 3×12×20kg"></textarea></div>
+    <div class="section-title">Dieta</div>
+    <div class="row3">
+      <div class="field"><label>Kalorie</label><input type="number" id="d-kcal" placeholder="2000"/></div>
+      <div class="field"><label>Białko (g)</label><input type="number" id="d-prot" placeholder="160"/></div>
+      <div class="field"><label>Keto</label>
+        <select id="d-keto"><option value="">–</option><option value="pełna">Pełna</option><option value="ok">OK</option><option value="odchylenie">Odchylenie</option><option value="off">Off</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Notatka dnia</label><textarea id="d-note" placeholder="Uwagi, obserwacje..."></textarea></div>
+  </div>
+</div>
+
+<!-- IMPORT TAB -->
+<div class="tab" id="tab-import">
+  <div class="thead">
+    <div><div class="thead-title">Import danych</div><div class="thead-sub">Pliki .md, zdjęcia, tekst — AI parsuje automatycznie</div></div>
+  </div>
+  <div class="tbody">
+    <div class="info-box">
+      <b>Jak to działa:</b> wgrywasz plik .md (lub kilka naraz) z danymi tygodniowymi — AI analizuje zawartość i automatycznie zapisuje dane do odpowiednich tygodni i dni projektu. Działa też dla zdjęć screenów i tekstu wklejonego ręcznie.
+    </div>
+
+    <div class="section-title" style="margin-top:0">Wgraj pliki .md</div>
+    <label class="drop-zone" id="md-drop-zone" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleMdDrop(event)">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;display:block;margin-left:auto;margin-right:auto"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Kliknij lub przeciągnij pliki .md tutaj<br>
+      <span style="font-size:11px;margin-top:4px;display:block">Możesz wgrać wiele plików naraz</span>
+      <input type="file" accept=".md,.txt" multiple style="display:none" onchange="handleMdFiles(this.files)"/>
+    </label>
+
+    <div id="md-files-list" style="margin-top:10px"></div>
+
+    <div class="section-title">Lub wklej zawartość pliku .md</div>
+    <div class="field"><textarea id="md-paste" style="min-height:120px;font-family:monospace;font-size:12px" placeholder="Wklej tutaj zawartość pliku .md..."></textarea></div>
+    <div class="field"><label>Do którego tygodnia przypisać dane?</label>
+      <select id="md-week-target">
+        <option value="auto">Auto (AI rozpozna z dat)</option>
+        <option value="1">Tydzień 1 (17.02–23.02)</option>
+        <option value="2">Tydzień 2 (24.02–01.03)</option>
+        <option value="3">Tydzień 3 (03.03–09.03)</option>
+        <option value="4">Tydzień 4 (10.03–16.03)</option>
+        <option value="5">Tydzień 5 (17.03–23.03)</option>
+        <option value="6">Tydzień 6 (24.03–30.03)</option>
+      </select>
+    </div>
+    <div class="btn-row" style="margin-bottom:16px">
+      <button class="btn btn-g" onclick="parseMdContent()">Parsuj przez AI</button>
+    </div>
+
+    <div id="md-result" style="font-size:13px;line-height:1.7"></div>
+  </div>
+</div>
+
+<!-- MEASUREMENTS TAB -->
+<div class="tab" id="tab-meas">
+  <div class="thead">
+    <div><div class="thead-title">Pomiary ciała</div><div class="thead-sub">Co ~10 dni · 3. dzień wolny po nocnych · rano na czczo</div></div>
+    <button class="btn btn-g btn-sm" onclick="openF('fbox-meas')">+ Dodaj</button>
+  </div>
+  <div class="tbody">
+    <div class="fbox" id="fbox-meas">
+      <div class="row2">
+        <div class="field"><label>Data</label><input type="date" id="m-date"/></div>
+        <div class="field"><label>Masa ciała (kg)</label><input type="number" id="m-weight" step="0.1"/></div>
+      </div>
+      <div class="section-title" style="margin-top:4px">Obwody (cm)</div>
+      <div class="row3">
+        <div class="field"><label>Pas (pępek)</label><input type="number" id="m-w1" step="0.5"/></div>
+        <div class="field"><label>Pas (talerze)</label><input type="number" id="m-w2" step="0.5"/></div>
+        <div class="field"><label>Pas wciągnięty</label><input type="number" id="m-w3" step="0.5"/></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Klatka (cm)</label><input type="number" id="m-chest" step="0.5"/></div>
+        <div class="field"><label>Udo (cm)</label><input type="number" id="m-thigh" step="0.5"/></div>
+      </div>
+      <div class="section-title" style="margin-top:4px">Kaliper (mm)</div>
+      <div class="row3">
+        <div class="field"><label>Klatka</label><input type="number" id="m-kc" step="0.5"/></div>
+        <div class="field"><label>Brzuch</label><input type="number" id="m-ka" step="0.5"/></div>
+        <div class="field"><label>Udo</label><input type="number" id="m-kt" step="0.5"/></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-g btn-sm" onclick="saveMeas()">Zapisz</button><button class="btn btn-sm" onclick="closeF('fbox-meas')">Anuluj</button></div>
+    </div>
+    <div id="meas-list"></div>
+  </div>
+</div>
+
+<!-- HISTORY TAB -->
+<div class="tab" id="tab-history">
+  <div class="thead"><div><div class="thead-title">Historia tygodni</div></div></div>
+  <div class="tbody" id="history-body"></div>
+</div>
+
+<!-- PROFILE TAB -->
+<div class="tab" id="tab-profile">
+  <div class="thead">
+    <div><div class="thead-title">Profil użytkownika</div></div>
+    <button class="btn btn-g btn-sm" onclick="saveProfile()">Zapisz</button>
+  </div>
+  <div class="tbody">
+    <div class="section-title" style="margin-top:0">Dane podstawowe</div>
+    <div class="row3">
+      <div class="field"><label>Płeć</label><select id="p-sex"><option value="M">Mężczyzna</option><option value="K">Kobieta</option></select></div>
+      <div class="field"><label>Wiek</label><input type="number" id="p-age"/></div>
+      <div class="field"><label>Wzrost (cm)</label><input type="number" id="p-height"/></div>
+    </div>
+    <div class="row3">
+      <div class="field"><label>Waga startowa (kg)</label><input type="number" id="p-ws" step="0.1"/></div>
+      <div class="field"><label>Cel (kg)</label><input type="number" id="p-wg" step="0.1"/></div>
+      <div class="field"><label>Staż</label><input type="text" id="p-exp" placeholder="5 lat"/></div>
+    </div>
+    <div class="field"><label>System pracy</label><input type="text" id="p-work" value="5BOP – cykl 10-dniowy (P/P/PP/PP/N/N/W/W/W/W)"/></div>
+    <div class="field"><label>Urazy / ograniczenia biomechaniczne</label><textarea id="p-inj"></textarea></div>
+    <div class="field"><label>Sprzęt treningowy</label><textarea id="p-equip"></textarea></div>
+    <div class="section-title">Dieta i suplementacja</div>
+    <div class="row2">
+      <div class="field"><label>Podejście dietetyczne</label><input type="text" id="p-diet" placeholder="Keto..."/></div>
+      <div class="field"><label>Cel kaloryczny</label><input type="number" id="p-kcal"/></div>
+    </div>
+    <div class="field"><label>Suplementacja</label><textarea id="p-suppl"></textarea></div>
+    <div class="field"><label>Dodatkowe uwagi</label><textarea id="p-notes"></textarea></div>
+  </div>
+</div>
+
+<!-- PLANS TAB -->
+<div class="tab" id="tab-plans">
+  <div class="thead"><div><div class="thead-title">Plany treningowe</div></div><button class="btn btn-g btn-sm" onclick="openF('fbox-plan')">+ Dodaj</button></div>
+  <div class="tbody">
+    <div class="fbox" id="fbox-plan">
+      <div class="row3">
+        <div class="field"><label>Nazwa</label><input type="text" id="pl-name"/></div>
+        <div class="field"><label>Od</label><input type="date" id="pl-from"/></div>
+        <div class="field"><label>Do</label><input type="date" id="pl-to"/></div>
+      </div>
+      <div class="field"><label>Opis planu</label><textarea id="pl-desc"></textarea></div>
+      <div class="field"><label>Ocena po zakończeniu</label><textarea id="pl-rev"></textarea></div>
+      <div class="btn-row"><button class="btn btn-g btn-sm" onclick="savePlan()">Zapisz</button><button class="btn btn-sm" onclick="closeF('fbox-plan')">Anuluj</button></div>
+    </div>
+    <div id="plans-list"></div>
+  </div>
+</div>
+
+<!-- LABS TAB -->
+<div class="tab" id="tab-labs">
+  <div class="thead"><div><div class="thead-title">Badania laboratoryjne</div></div><button class="btn btn-g btn-sm" onclick="openF('fbox-lab')">+ Dodaj</button></div>
+  <div class="tbody">
+    <div class="fbox" id="fbox-lab">
+      <div class="row2">
+        <div class="field"><label>Data</label><input type="date" id="lab-date"/></div>
+        <div class="field"><label>Typ badania</label><input type="text" id="lab-type"/></div>
+      </div>
+      <div class="field"><label>Wyniki</label><textarea id="lab-res"></textarea></div>
+      <div class="field"><label>Komentarz</label><textarea id="lab-note"></textarea></div>
+      <div class="btn-row"><button class="btn btn-g btn-sm" onclick="saveLab()">Zapisz</button><button class="btn btn-sm" onclick="closeF('fbox-lab')">Anuluj</button></div>
+    </div>
+    <div id="labs-list"></div>
+  </div>
+</div>
+
+<!-- EVENTS TAB -->
+<div class="tab" id="tab-events">
+  <div class="thead"><div><div class="thead-title">Zdarzenia projektowe</div></div><button class="btn btn-g btn-sm" onclick="openF('fbox-event')">+ Dodaj</button></div>
+  <div class="tbody">
+    <div class="fbox" id="fbox-event">
+      <div class="row2">
+        <div class="field"><label>Data</label><input type="date" id="ev-date"/></div>
+        <div class="field"><label>Typ</label><select id="ev-type"><option value="milestone">Kamień milowy</option><option value="zakłócenie">Zakłócenie</option><option value="zmiana">Zmiana protokołu</option><option value="uwaga">Uwaga</option></select></div>
+      </div>
+      <div class="field"><label>Opis</label><input type="text" id="ev-text"/></div>
+      <div class="btn-row"><button class="btn btn-g btn-sm" onclick="saveEvent()">Zapisz</button><button class="btn btn-sm" onclick="closeF('fbox-event')">Anuluj</button></div>
+    </div>
+    <div id="events-list"></div>
+  </div>
+</div>
+
+<!-- SYNC TAB -->
+<div class="tab" id="tab-sync">
+  <div class="thead"><div><div class="thead-title">Synchronizacja</div><div class="thead-sub">Google Apps Script — darmowe, automatyczne</div></div></div>
+  <div class="tbody">
+    <div class="info-box">
+      <b>Jak skonfigurować (jednorazowo, ~3 minuty):</b><br><br>
+      1. Wejdź na <b>script.google.com</b> → kliknij <b>Nowy projekt</b><br>
+      2. Usuń istniejący kod i wklej kod z pliku <b>gas_script.gs</b><br>
+      3. Kliknij <b>Zapisz</b> (ikona dyskietki)<br>
+      4. Kliknij <b>Wdróż → Nowe wdrożenie</b><br>
+      5. Typ: <b>Aplikacja internetowa</b><br>
+      6. Wykonaj jako: <b>Ja</b> · Kto ma dostęp: <b>Wszyscy</b><br>
+      7. Kliknij <b>Wdróż</b> → skopiuj URL<br>
+      8. Wklej URL poniżej → Zapisz
+    </div>
+
+    <div class="section-title" style="margin-top:0">URL Google Apps Script</div>
+    <div class="field"><input type="text" id="gas-url" placeholder="https://script.google.com/macros/s/ABC.../exec"/></div>
+    <div class="btn-row" style="margin-bottom:16px">
+      <button class="btn btn-g" onclick="saveGsConfig()">Zapisz URL</button>
+      <button class="btn" onclick="syncToSheets()">↑ Wyślij dane</button>
+      <button class="btn" onclick="syncFromSheets()">↓ Pobierz dane</button>
+    </div>
+    <div id="sync-log" style="font-size:12px;color:var(--text2);line-height:1.8;font-family:monospace"></div>
+
+    <div class="section-title">Eksport / Import ręczny (backup)</div>
+    <div class="btn-row">
+      <button class="btn" onclick="exportJSON()">⬇ Eksport JSON</button>
+      <label class="btn" style="cursor:pointer">⬆ Import JSON<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"/></label>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">Backup lub ręczne przenoszenie danych.</div>
+  </div>
+</div>
+
+</div><!-- end main -->
+</div><!-- end layout -->
+
+<div class="bottomtabs">
+  <div class="tabs-row">
+    <div class="tab-btn active" onclick="ST('ai')" id="tb-ai"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 2h12v8H4l-3 2V2z"/></svg>AI</div>
+    <div class="tab-btn" onclick="ST('week')" id="tb-week"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="12" height="10" rx="1"/><path d="M1 5h12M4 1v2M10 1v2"/></svg>Tydzień</div>
+    <div class="tab-btn" onclick="ST('import')" id="tb-import"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1v8M4 6l3 3 3-3M2 11h10"/></svg>Import</div>
+    <div class="tab-btn" onclick="ST('meas')" id="tb-meas"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="12" height="8" rx="1"/><path d="M4 3V2M7 3V1M10 3V2M4 11v1M7 11v2M10 11v1"/></svg>Pomiary</div>
+    <div class="tab-btn" onclick="ST('history')" id="tb-history"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M7 4v3l2 1.5"/></svg>Historia</div>
+    <div class="tab-btn" onclick="ST('profile')" id="tb-profile"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="4" r="2.5"/><path d="M1 13c0-3.3 2.7-5 6-5s6 1.7 6 5"/></svg>Profil</div>
+    <div class="tab-btn" onclick="ST('sync')" id="tb-sync"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 7a6 6 0 1 0 1-3.5M1 1v3h3"/></svg>Sync</div>
+  </div>
+</div>
+
+<script>
+const KEY='recomp_v6';
+function LD(){try{return JSON.parse(localStorage.getItem(KEY))||initDB()}catch{return initDB()}}
+function SV(d){localStorage.setItem(KEY,JSON.stringify(d));autoSyncDebounced()}
+function initDB(){
+  return{profile:{work:'5BOP – cykl 10-dniowy (P/P/PP/PP/N/N/W/W/W/W)'},weeks:{},measurements:[],plans:[],labs:[],
+    events:[
+      {id:1,date:'2026-02-17',type:'milestone',text:'Start projektu – redukcja węglowodanów (adaptacja keto)'},
+      {id:2,date:'2026-02-19',type:'milestone',text:'Rozpoczęcie treningów w projekcie'},
+      {id:3,date:'2026-02-28',type:'zakłócenie',text:'Alkohol ~350g whisky – dane regeneracyjne zakłócone'},
+      {id:4,date:'2026-03-01',type:'zakłócenie',text:'Alkohol ~150g whisky – dane regeneracyjne zakłócone'},
+      {id:5,date:'2026-03-02',type:'zmiana',text:'Powrót do diety niskowęglowodanowej'}
+    ]
+  }
+}
+
+let activeWeek=3,activeDay=1;
+const chatH=[];
+let pendingImgs=[],importImgs=[];
+let syncTimer=null;
+
+const WS={1:'17.02',2:'24.02',3:'03.03',4:'10.03',5:'17.03',6:'24.03'};
+const WE={1:'23.02',2:'01.03',3:'09.03',4:'16.03',5:'23.03',6:'30.03'};
+
+// ===== TABS =====
+function ST(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.tab-btn').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const ni=document.getElementById('ni-'+name);if(ni)ni.classList.add('active');
+  const tb=document.getElementById('tb-'+name);if(tb)tb.classList.add('active');
+  if(name==='history')renderHistory();
+  if(name==='events')renderEvents();
+  if(name==='plans')renderPlans();
+  if(name==='labs')renderLabs();
+  if(name==='meas')renderMeas();
+}
+function openF(id){document.getElementById(id).classList.add('open');const t=new Date().toISOString().split('T')[0];document.querySelectorAll('#'+id+' input[type=date]').forEach(i=>{if(!i.value)i.value=t})}
+function closeF(id){document.getElementById(id).classList.remove('open')}
+
+// ===== KEYS =====
+function syncWeek(v){
+  activeWeek=parseInt(v);
+  ['wsel-d','wsel-m'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=v});
+  document.getElementById('topbar-week').textContent='T'+v;
+  document.getElementById('w-num').textContent=v;
+  document.getElementById('w-range').textContent=(WS[v]||'')+'–'+(WE[v]||'');
+  buildDayPills();loadDayFields(activeDay);updateWeekStats();
+}
+function syncKey(v){
+  ['apikey-d','apikey-m'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=v});
+  localStorage.setItem('rcp_key',v);
+}
+function getKey(){return(document.getElementById('apikey-d')||{}).value?.trim()||(document.getElementById('apikey-m')||{}).value?.trim()||''}
+
+// ===== DAYS =====
+const DF=['date','shift','hrv','rhr','bb','sleep','sleepq','stress','ttype','ttime','tnote','kcal','prot','keto','note'];
+function getDayFields(){const o={};DF.forEach(f=>{const e=document.getElementById('d-'+f);if(e&&e.value!=='')o[f]=e.value});return o}
+function loadDayFields(n){const d=LD();const day=(d.weeks[activeWeek]||{})[n]||{};DF.forEach(f=>{const e=document.getElementById('d-'+f);if(e)e.value=day[f]||''})}
+function buildDayPills(){
+  const d=LD();const wk=d.weeks[activeWeek]||{};
+  document.getElementById('day-pills').innerHTML=[1,2,3,4,5,6,7].map(i=>`<div class="pill${i===activeDay?' active':''}${wk[i]&&wk[i].date?' has-data':''}" onclick="selDay(${i})">D${i}</div>`).join('');
+  document.getElementById('day-num').textContent=activeDay;
+}
+function selDay(n){
+  const data=getDayFields();
+  if(Object.keys(data).length){const d=LD();if(!d.weeks[activeWeek])d.weeks[activeWeek]={};d.weeks[activeWeek][activeDay]=data;SV(d)}
+  activeDay=n;buildDayPills();loadDayFields(n);
+}
+function saveDay(){
+  const data=getDayFields();const d=LD();
+  if(!d.weeks[activeWeek])d.weeks[activeWeek]={};
+  d.weeks[activeWeek][activeDay]=data;SV(d);buildDayPills();updateWeekStats();showToast('Dzień '+activeDay+' zapisany ✓');
+}
+function updateWeekStats(){
+  const d=LD();const wk=d.weeks[activeWeek]||{};
+  const days=Object.values(wk).filter(x=>x&&typeof x==='object');
+  const avg=arr=>arr.length?arr.reduce((a,b)=>a+b)/arr.length:null;
+  const hrvs=days.filter(x=>x.hrv).map(x=>+x.hrv);
+  const bbs=days.filter(x=>x.bb).map(x=>+x.bb);
+  const slps=days.filter(x=>x.sleep).map(x=>+x.sleep);
+  document.getElementById('w-hrv').textContent=avg(hrvs)?Math.round(avg(hrvs)):'–';
+  document.getElementById('w-bb').textContent=avg(bbs)?Math.round(avg(bbs)):'–';
+  document.getElementById('w-sleep').textContent=avg(slps)?avg(slps).toFixed(1):'–';
+  document.getElementById('w-trn').textContent=days.filter(x=>x.ttype).length||'–';
+}
+
+// ===== IMAGES =====
+async function fileToBase64(file){return new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.readAsDataURL(file)})}
+function addImages(input){
+  Array.from(input.files).forEach(async f=>{pendingImgs.push({b64:await fileToBase64(f),mt:f.type||'image/jpeg',thumb:URL.createObjectURL(f)});renderPendingImgs()});
+  input.value='';
+}
+function renderPendingImgs(){
+  const w=document.getElementById('pending-imgs');
+  if(!pendingImgs.length){w.style.display='none';return}
+  w.style.display='flex';
+  w.innerHTML=pendingImgs.map((img,i)=>`<div class="img-thumb"><img src="${img.thumb}"/><button onclick="pendingImgs.splice(${i},1);renderPendingImgs()">×</button></div>`).join('');
+}
+function addImportImages(input){
+  Array.from(input.files).forEach(async f=>{importImgs.push({b64:await fileToBase64(f),mt:f.type||'image/jpeg',thumb:URL.createObjectURL(f)});renderImportImgs()});
+  input.value='';
+}
+function renderImportImgs(){
+  const p=document.getElementById('import-img-preview');
+  p.innerHTML=importImgs.map((img,i)=>`<div class="img-thumb"><img src="${img.thumb}"/><button onclick="importImgs.splice(${i},1);renderImportImgs()">×</button></div>`).join('');
+}
+
+// ===== AI =====
+async function callAI(messages,sys,maxTok=1500){
+  const key=getKey();
+  if(!key)return'⚠️ Brak klucza API Anthropic (sk-ant-...). Wpisz go w ustawieniach.';
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:maxTok,system:sys,messages})
+  });
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Błąd '+res.status)}
+  const data=await res.json();
+  return data.content?.map(c=>c.text||'').join('')||'Brak odpowiedzi.';
+}
+
+function buildCtx(){
+  const d=LD();const p=d.profile||{};
+  let c='=== PROJEKT REKOMPOZYCJA ===\nStart: 17.02.2026 | Cel: redukcja tłuszczu trzewnego, poprawa estetyki, siła\nDieta: keto/niskowęglowodanowa (start 17.02.2026)\nSystem pracy: 5BOP – cykl 10-dniowy (P/P/PP/PP/N/N/W/W/W/W)\nPomiary: co ~10 dni, 3. dzień wolny po nocnych, rano na czczo\n\n';
+  if(p.age||p.height||p.ws){c+='=== PROFIL ===\n';if(p.age)c+=`Wiek:${p.age} `;if(p.height)c+=`Wzrost:${p.height}cm `;if(p.ws)c+=`Waga start:${p.ws}kg`;if(p.wg)c+=` Cel:${p.wg}kg`;c+='\n';if(p.inj)c+=`Urazy: ${p.inj}\n`;if(p.diet)c+=`Dieta: ${p.diet}${p.kcal?' kcal:'+p.kcal:''}\n`;if(p.suppl)c+=`Supl: ${p.suppl}\n`;c+='\n';}
+  c+='=== ZDARZENIA ===\n';[...d.events].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>c+=`${e.date}: [${e.type}] ${e.text}\n`);
+  c+='\n=== DANE TYGODNIOWE ===\n';
+  for(let w=1;w<=6;w++){const wk=d.weeks[w]||{};const days=Object.values(wk).filter(x=>x&&x.date);if(!days.length)continue;c+=`\n--T${w} (${WS[w]}–${WE[w]}):--\n`;days.sort((a,b)=>a.date.localeCompare(b.date)).forEach(day=>{const sh={P:'poranna',PP:'popołudniowa',N:'nocna',W:'wolne'}[day.shift]||'–';c+=`[${day.date}] ${sh}`;if(day.hrv)c+=` HRV:${day.hrv}`;if(day.rhr)c+=` RHR:${day.rhr}`;if(day.bb)c+=` BB:${day.bb}`;if(day.sleep)c+=` sen:${day.sleep}h`;if(day.stress)c+=` stres:${day.stress}`;if(day.ttype)c+=` | TRENING:${day.ttype}${day.ttime?' '+day.ttime+'min':''}${day.tnote?' '+day.tnote:''}`;if(day.kcal)c+=` | ${day.kcal}kcal B:${day.prot||'?'}g keto:${day.keto||'?'}`;if(day.note)c+=` | ${day.note}`;c+='\n'});}
+  if(d.measurements?.length){c+='\n=== POMIARY ===\n';d.measurements.slice(0,6).forEach(m=>c+=`[${m.date}] ${m.weight||'?'}kg pas:${m.w1||'?'}cm kalBrzuch:${m.ka||'?'}mm\n`);}
+  return c;
+}
+
+const SYS=()=>`Jesteś asystentem projektu rekompozycji sylwetki. Kontekst:\n\n${buildCtx()}\n\nZasady:\n- Odpowiadaj po polsku, konkretnie\n- Cykl 5BOP: nocne zmiany zaburzają HRV/sen\n- Uwzględniaj zdarzenia zakłócające przy analizach\n- Jeśli widzisz zdjęcie — wyciągnij dane liczbowe i potwierdź co odczytałeś`;
+
+function addMsg(role,text,imgs){
+  const wrap=document.getElementById('chat-msgs');
+  const el=document.createElement('div');el.className='msg '+role;
+  if(imgs?.length){imgs.forEach(img=>{const im=document.createElement('img');im.src='data:'+img.mt+';base64,'+img.b64;im.style.cssText='max-width:200px;border-radius:6px;margin-bottom:6px;display:block';el.appendChild(im)});if(text){const t=document.createElement('span');t.textContent=text;el.appendChild(t)}}
+  else el.textContent=text;
+  wrap.appendChild(el);wrap.scrollTop=wrap.scrollHeight;return el;
+}
+function addLoader(){const w=document.getElementById('chat-msgs');const el=document.createElement('div');el.className='msg a';el.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';w.appendChild(el);w.scrollTop=w.scrollHeight;return el}
+
+async function sendAI(){
+  const inp=document.getElementById('chat-in');
+  const txt=inp.value.trim();
+  if(!txt&&!pendingImgs.length)return;
+  inp.value='';
+  let content;
+  if(pendingImgs.length){content=[];pendingImgs.forEach(img=>content.push({type:'image',source:{type:'base64',media_type:img.mt,data:img.b64}}));content.push({type:'text',text:txt||'Przeanalizuj te screeny i wyciągnij dane treningowe/zdrowotne.'});}
+  else content=txt;
+  addMsg('u',txt||'[zdjęcie]',pendingImgs.length?pendingImgs:null);
+  pendingImgs=[];renderPendingImgs();
+  const loader=addLoader();
+  chatH.push({role:'user',content});
+  try{const reply=await callAI(chatH,SYS());loader.textContent=reply;chatH.push({role:'assistant',content:reply});if(chatH.length>30)chatH.splice(0,2)}
+  catch(e){loader.textContent='Błąd: '+e.message}
+}
+function quickAsk(q){document.getElementById('chat-in').value=q;sendAI()}
+
+// ===== IMPORT DAY (images/text) =====
+async function parseImport(){
+  const txt=document.getElementById('import-text').value.trim();
+  const pr=document.getElementById('parse-result');
+  if(!txt&&!importImgs.length){pr.textContent='Dodaj zdjęcie lub wklej tekst.';return}
+  pr.style.color='var(--text2)';pr.textContent='Parsowanie przez AI...';
+  const key=getKey();if(!key){pr.textContent='⚠️ Brak klucza API.';return}
+  try{
+    let userContent;
+    const jsonPrompt='Wyodrębnij dane i zwróć TYLKO JSON bez markdown:\n{"date":"YYYY-MM-DD","shift":"P|PP|N|W","hrv":n,"rhr":n,"bb":n,"sleep":n,"sleepq":n,"stress":n,"ttype":"s","ttime":n,"tnote":"s","kcal":n,"prot":n,"keto":"s","note":"s"}\nPomiń pola których nie ma.';
+    if(importImgs.length){userContent=[];importImgs.forEach(img=>userContent.push({type:'image',source:{type:'base64',media_type:img.mt,data:img.b64}}));userContent.push({type:'text',text:(txt?txt+'\n\n':'')+jsonPrompt});}
+    else userContent=jsonPrompt+'\n\n'+txt;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:600,messages:[{role:'user',content:userContent}]})});
+    const data=await res.json();
+    const raw=data.content?.map(c=>c.text||'').join('')||'{}';
+    let parsed={};try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim())}catch{pr.style.color='var(--red)';pr.textContent='Nie udało się sparsować danych.';return}
+    const filled=[];Object.keys(parsed).forEach(f=>{const el=document.getElementById('d-'+f);if(el&&parsed[f]!=null){el.value=parsed[f];filled.push(f)}});
+    pr.style.color='var(--gd)';pr.textContent='✓ Wczytano: '+filled.join(', ')+'. Sprawdź i kliknij Zapisz.';
+    document.getElementById('import-text').value='';importImgs=[];document.getElementById('import-img-preview').innerHTML='';
+  }catch(e){pr.style.color='var(--red)';pr.textContent='Błąd: '+e.message}
+}
+
+// ===== IMPORT .MD =====
+function handleMdDrop(e){
+  e.preventDefault();document.getElementById('md-drop-zone').classList.remove('drag-over');
+  const files=[...e.dataTransfer.files].filter(f=>f.name.endsWith('.md')||f.name.endsWith('.txt'));
+  if(files.length)handleMdFiles(files);
+}
+function handleMdFiles(files){
+  const list=document.getElementById('md-files-list');
+  list.innerHTML='<div style="font-size:12px;color:var(--text2)">Wczytano pliki:</div>';
+  Array.from(files).forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const div=document.createElement('div');
+      div.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2);border-radius:var(--r);margin-top:6px;font-size:13px';
+      div.innerHTML=`<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="10" height="12" rx="1"/><path d="M4 5h6M4 7.5h4"/></svg><span style="flex:1">${f.name}</span><button class="btn btn-g btn-sm" onclick="parseSingleMd(this,${JSON.stringify(e.target.result).replace(/'/g,"&#39;")})">Parsuj</button>`;
+      list.appendChild(div);
+    };
+    reader.readAsText(f,'UTF-8');
+  });
+}
+async function parseSingleMd(btn,content){
+  btn.textContent='Parsowanie...';btn.disabled=true;
+  await parseMdText(content);
+  btn.textContent='✓ Gotowe';
+}
+async function parseMdContent(){
+  const content=document.getElementById('md-paste').value.trim();
+  if(!content){showToast('Wklej najpierw zawartość pliku .md');return}
+  await parseMdText(content);
+}
+async function parseMdText(mdContent){
+  const res=document.getElementById('md-result');
+  const weekTarget=document.getElementById('md-week-target').value;
+  const key=getKey();
+  if(!key){res.innerHTML='<div class="warn-box">⚠️ Brak klucza API Anthropic.</div>';return}
+  res.innerHTML='<div style="color:var(--text2)">Analizuję plik przez AI...</div>';
+  const prompt=`Masz plik .md z danymi projektu rekompozycji. Przeanalizuj go i wyodrębnij dane dla każdego dnia.
+Kontekst projektu: start 17.02.2026, system pracy 5BOP (P/P/PP/PP/N/N/W/W/W/W), diety keto.
+Tygodnie: T1=17.02-23.02, T2=24.02-01.03, T3=03.03-09.03, T4=10.03-16.03, T5=17.03-23.03, T6=24.03-30.03.
+${weekTarget!=='auto'?'Przypisz wszystkie dane do tygodnia '+weekTarget+'.':'Rozpoznaj tygodnie automatycznie z dat.'}
+
+Zwróć TYLKO JSON bez markdown w formacie:
+{"weeks":{"1":{"1":{"date":"YYYY-MM-DD","shift":"P|PP|N|W","hrv":n,"rhr":n,"bb":n,"sleep":n,"sleepq":n,"stress":n,"ttype":"s","ttime":n,"tnote":"s","kcal":n,"prot":n,"keto":"s","note":"s"},"2":{...}},"2":{...}}}
+Klucze zewnętrzne = numer tygodnia (1-6), klucze wewnętrzne = numer dnia w tygodniu (1-7).
+Pomiń pola których nie ma. Jeśli nie możesz rozpoznać tygodnia/dnia, użyj tygodnia ${weekTarget!=='auto'?weekTarget:'1'} i kolejnych dni.
+
+Plik .md:
+${mdContent.slice(0,6000)}`;
+
+  try{
+    const reply=await callAI([{role:'user',content:prompt}],'Jesteś ekspertem od parsowania danych fitness z plików markdown. Zwracasz TYLKO JSON.',2000);
+    let parsed={};
+    try{parsed=JSON.parse(reply.replace(/```json|```/g,'').trim())}catch{res.innerHTML='<div class="warn-box">Nie udało się sparsować odpowiedzi AI. Spróbuj z mniejszym plikiem lub wyraźniej sformatowanymi danymi.</div>';return}
+    const db=LD();let daysAdded=0;
+    Object.entries(parsed.weeks||{}).forEach(([wn,days])=>{
+      if(!db.weeks[wn])db.weeks[wn]={};
+      Object.entries(days).forEach(([dn,dayData])=>{
+        if(Object.keys(dayData).length){db.weeks[wn][dn]=dayData;daysAdded++}
+      });
+    });
+    SV(db);updateWeekStats();
+    res.innerHTML=`<div class="info-box">✓ Zaimportowano dane dla <b>${daysAdded} dni</b> z pliku .md.<br>Sprawdź zakładkę <b>Historia</b> i poszczególne tygodnie.</div>`;
+    document.getElementById('md-paste').value='';
+  }catch(e){res.innerHTML=`<div class="warn-box">Błąd: ${e.message}</div>`}
+}
+
+// ===== GOOGLE APPS SCRIPT SYNC =====
+function saveGsConfig(){
+  const url=document.getElementById('gas-url').value.trim();
+  localStorage.setItem('gas_url',url);
+  showToast('URL zapisany ✓');
+  setSyncStatus('ok','Apps Script aktywny');
+  logSync('✓ URL Google Apps Script zapisany');
+}
+function getGasUrl(){return localStorage.getItem('gas_url')||''}
+
+function setSyncStatus(state,text){
+  const dot=document.getElementById('sync-dot');
+  dot.className='sync-dot '+state;
+  const st=document.getElementById('sync-status-text');
+  if(st)st.textContent=text||'';
+}
+
+function logSync(msg){
+  const el=document.getElementById('sync-log');
+  if(!el)return;
+  const t=new Date().toLocaleTimeString('pl-PL');
+  el.innerHTML=`<div>[${t}] ${msg}</div>`+el.innerHTML;
+}
+
+async function syncToSheets(){
+  const url=getGasUrl();
+  if(!url){alert('Wklej najpierw URL Google Apps Script.');return}
+  setSyncStatus('syncing','Wysyłanie...');logSync('Wysyłanie danych...');
+  try{
+    const d=LD();
+    const res=await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'save',data:d})
+    });
+    const result=await res.json();
+    if(result.status==='ok'){
+      setSyncStatus('ok','Zsynchronizowano');
+      logSync('✓ Dane wysłane ('+new Date().toLocaleTimeString('pl-PL')+')');
+      showToast('Zsynchronizowano z Google Sheets ✓');
+    }else throw new Error(result.message||'Błąd serwera');
+  }catch(e){
+    setSyncStatus('err','Błąd sync');
+    logSync('✗ '+e.message);
+  }
+}
+
+async function syncFromSheets(){
+  const url=getGasUrl();
+  if(!url){alert('Wklej najpierw URL Google Apps Script.');return}
+  setSyncStatus('syncing','Pobieranie...');logSync('Pobieranie danych...');
+  try{
+    const res=await fetch(url+'?action=load');
+    const result=await res.json();
+    if(result.status==='ok'&&result.data){
+      localStorage.setItem(KEY,JSON.stringify(result.data));
+      loadProfile();updateWeekStats();buildDayPills();renderEvents();
+      setSyncStatus('ok','Zsynchronizowano');
+      logSync('✓ Dane pobrane ('+new Date().toLocaleTimeString('pl-PL')+')');
+      showToast('Dane pobrane z Google Sheets ✓');
+    }else throw new Error(result.message||'Brak danych');
+  }catch(e){
+    setSyncStatus('err','Błąd sync');
+    logSync('✗ '+e.message);
+  }
+}
+
+let autoSyncTimer=null;
+function autoSyncDebounced(){
+  const url=getGasUrl();if(!url)return;
+  clearTimeout(autoSyncTimer);
+  autoSyncTimer=setTimeout(()=>syncToSheets(),5000);
+}
+
+// ===== EXPORT/IMPORT JSON =====
+function exportJSON(){
+  const d=LD();const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='recomp_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();
+}
+function importJSON(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);localStorage.setItem(KEY,JSON.stringify(d));loadProfile();updateWeekStats();buildDayPills();showToast('Dane zaimportowane ✓')}catch{alert('Błędny plik JSON')}};r.readAsText(file);
+}
+
+// ===== OTHER DATA =====
+function saveMeas(){const d=LD();d.measurements.unshift({id:Date.now(),date:document.getElementById('m-date').value,weight:document.getElementById('m-weight').value,w1:document.getElementById('m-w1').value,w2:document.getElementById('m-w2').value,w3:document.getElementById('m-w3').value,chest:document.getElementById('m-chest').value,thigh:document.getElementById('m-thigh').value,kc:document.getElementById('m-kc').value,ka:document.getElementById('m-ka').value,kt:document.getElementById('m-kt').value});SV(d);closeF('fbox-meas');renderMeas()}
+function renderMeas(){const d=LD();const el=document.getElementById('meas-list');if(!d.measurements?.length){el.innerHTML='<div class="empty">Brak pomiarów.</div>';return}el.innerHTML=d.measurements.map((m,i)=>{const prev=d.measurements[i+1];const delta=m.weight&&prev?.weight?+(m.weight)-+(prev.weight):null;const ds=delta!=null?` <span style="color:${delta<0?'var(--green)':'var(--red)'};font-size:12px">${delta>0?'+':''}${delta.toFixed(1)}kg</span>`:'';return`<div class="entry"><div class="entry-header"><div class="entry-title">${m.weight?m.weight+'kg':'-'}${ds}</div><div class="entry-date">${m.date?.replace(/-/g,'.')||''}</div></div><div class="entry-detail">${[m.w1&&'Pas(pęp):'+m.w1,m.w2&&'Pas(bio):'+m.w2,m.chest&&'Klatka:'+m.chest,m.thigh&&'Udo:'+m.thigh,m.ka&&'Kaliper:'+m.ka+'mm'].filter(Boolean).join(' · ')}</div></div>`}).join('')}
+function saveProfile(){const d=LD();['sex','age','height','ws','wg','exp','work','inj','equip','diet','kcal','suppl','notes'].forEach(f=>{const e=document.getElementById('p-'+f);if(e)d.profile[f]=e.value});SV(d);showToast('Profil zapisany ✓')}
+function loadProfile(){const d=LD();const p=d.profile||{};['sex','age','height','ws','wg','exp','work','inj','equip','diet','kcal','suppl','notes'].forEach(f=>{const e=document.getElementById('p-'+f);if(e&&p[f]!=null)e.value=p[f]})}
+function savePlan(){const d=LD();d.plans.unshift({id:Date.now(),name:document.getElementById('pl-name').value,from:document.getElementById('pl-from').value,to:document.getElementById('pl-to').value,desc:document.getElementById('pl-desc').value,rev:document.getElementById('pl-rev').value});SV(d);closeF('fbox-plan');renderPlans()}
+function renderPlans(){const d=LD();const el=document.getElementById('plans-list');if(!d.plans?.length){el.innerHTML='<div class="empty">Brak planów.</div>';return}el.innerHTML=d.plans.map(p=>`<div class="entry"><div class="entry-header"><div class="entry-title">${p.name||'Plan'}</div><div class="entry-date">${p.from?.replace(/-/g,'.')||''}${p.to?' – '+p.to.replace(/-/g,'.'):''}  </div></div><div class="entry-detail">${p.desc?.slice(0,120)||''}${p.rev?'<br>Ocena: '+p.rev.slice(0,80):''}</div></div>`).join('')}
+function saveLab(){const d=LD();d.labs.unshift({id:Date.now(),date:document.getElementById('lab-date').value,type:document.getElementById('lab-type').value,res:document.getElementById('lab-res').value,note:document.getElementById('lab-note').value});SV(d);closeF('fbox-lab');renderLabs()}
+function renderLabs(){const d=LD();const el=document.getElementById('labs-list');if(!d.labs?.length){el.innerHTML='<div class="empty">Brak badań.</div>';return}el.innerHTML=d.labs.map(l=>`<div class="entry"><div class="entry-header"><div class="entry-title">${l.type||'Badanie'}</div><div class="entry-date">${l.date?.replace(/-/g,'.')||''}</div></div><div class="entry-detail" style="white-space:pre-wrap">${l.res?.slice(0,200)||''}</div></div>`).join('')}
+function saveEvent(){const d=LD();const ev={id:Date.now(),date:document.getElementById('ev-date').value,type:document.getElementById('ev-type').value,text:document.getElementById('ev-text').value};if(!ev.text)return;d.events.unshift(ev);SV(d);closeF('fbox-event');renderEvents()}
+function renderEvents(){const d=LD();const el=document.getElementById('events-list');const s=[...d.events].sort((a,b)=>b.date.localeCompare(a.date));const dc={zakłócenie:'r',zmiana:'o'};const bc={zakłócenie:'br',zmiana:'bo',milestone:'bg',uwaga:'bb'};el.innerHTML=s.map(e=>`<div class="ev-item"><div class="ev-dot ${dc[e.type]||''}"></div><div class="ev-date">${e.date?.replace(/-/g,'.')||''}</div><div class="ev-body"><span class="badge2 ${bc[e.type]||'bg'}">${e.type}</span><div class="ev-text">${e.text}</div></div></div>`).join('')}
+function renderHistory(){const d=LD();const el=document.getElementById('history-body');let h='';for(let w=1;w<=6;w++){const wk=d.weeks[w]||{};const days=Object.values(wk).filter(x=>x?.date);if(!days.length)continue;const hrvs=days.filter(x=>x.hrv).map(x=>+x.hrv);const trns=days.filter(x=>x.ttype).length;const slps=days.filter(x=>x.sleep).map(x=>+x.sleep);h+=`<div class="entry"><div class="entry-header"><div class="entry-title">Tydzień ${w} <span class="badge2 bg">T${w}</span></div><div class="entry-date">${WS[w]||''}–${WE[w]||''}</div></div><div class="entry-detail">Dni: ${days.length} · Treningi: ${trns} · HRV śr: ${hrvs.length?Math.round(hrvs.reduce((a,b)=>a+b)/hrvs.length)+'ms':'–'} · Sen śr: ${slps.length?(slps.reduce((a,b)=>a+b)/slps.length).toFixed(1)+'h':'–'}</div></div>`}
+el.innerHTML=h||'<div class="empty">Brak danych w historii.</div>'}
+
+function showToast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+
+document.getElementById('chat-in').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI()}});
+
+window.addEventListener('load',()=>{
+  const k=localStorage.getItem('rcp_key');if(k)syncKey(k);
+  const gasUrl=localStorage.getItem('gas_url');
+  if(gasUrl){
+    const el=document.getElementById('gas-url');
+    if(el)el.value=gasUrl;
+    setSyncStatus('ok','Apps Script aktywny');
+  }
+  loadProfile();syncWeek(3);renderEvents();
+});
+</script>
+</body>
+</html>
